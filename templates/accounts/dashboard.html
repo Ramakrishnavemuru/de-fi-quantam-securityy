@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Quantum-Resistant DeFi Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        <p class="lead">Welcome to your quantum-secure DeFi dashboard, {{ user.username }}!</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-wallet me-2"></i>Your Wallets</h5>
+            </div>
+            <div class="card-body">
+                {% if wallets %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Balance</th>
+                                <th>Algorithm</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wallet in wallets %}
+                            <tr>
+                                <td>{{ wallet.name }}</td>
+                                <td><small class="text-muted">{{ wallet.address }}</small></td>
+                                <td>{{ wallet.balance }} ETH</td>
+                                <td><span class="badge badge-quantum">{{ wallet.key_algorithm }}</span></td>
+                                <td>
+                                    <a href="{% url 'create_transaction' %}?wallet={{ wallet.id }}" class="btn btn-sm btn-primary">Send</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{% url 'create_wallet' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Create New Wallet
+                </a>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>You don't have any wallets yet.
+                </div>
+                <a href="{% url 'create_wallet' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create Your First Wallet
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <i class="fas fa-lock fa-2x text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Quantum Protection</h6>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <i class="fas fa-key fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Key Management</h6>
+                        <span class="badge bg-primary">Secure</span>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-brain fa-2x text-info"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">AI Monitoring</h6>
+                        <span class="badge bg-info">Active</span>
+                    </div>
+                </div>
+                
+                <a href="{% url 'security_dashboard' %}" class="btn btn-primary mt-3 w-100">
+                    <i class="fas fa-tachometer-alt me-2"></i>Security Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Recent Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if user.security_alerts.exists %}
+                <ul class="list-group">
+                    {% for alert in user.security_alerts.all|slice:":3" %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-{{ alert.severity|lower }}">{{ alert.get_severity_display }}</span>
+                            {{ alert.get_alert_type_display }}
+                        </div>
+                        <small class="text-muted">{{ alert.timestamp|date:"M d" }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url 'alert_list' %}" class="btn btn-outline-primary mt-3 w-100">
+                    <i class="fas fa-list me-2"></i>View All Alerts
+                </a>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>No security alerts at this time.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Recent Transactions</h5>
+            </div>
+            <div class="card-body">
+                {% if user.wallets.first.sent_transactions.exists %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Transaction Hash</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in user.wallets.first.sent_transactions.all|slice:":5" %}
+                            <tr>
+                                <td><small class="text-muted">{{ tx.tx_hash|truncatechars:20 }}</small></td>
+                                <td>{{ tx.get_transaction_type_display }}</td>
+                                <td>{{ tx.amount }} ETH</td>
+                                <td>
+                                    {% if tx.status == 'CONFIRMED' %}
+                                    <span class="badge bg-success">Confirmed</span>
+                                    {% elif tx.status == 'PENDING' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ tx.timestamp|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'transaction_detail' tx_hash=tx.tx_hash %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{% url 'transaction_list' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-list me-2"></i>View All Transactions
+                </a>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>You haven't made any transactions yet.
+                </div>
+                <a href="{% url 'create_transaction' %}" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Make Your First Transaction
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
